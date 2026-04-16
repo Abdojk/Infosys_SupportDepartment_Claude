@@ -47,185 +47,162 @@ const Charts = (() => {
     }
 
     /**
+     * Render a chart to all matching canvas IDs. Fetches data once, renders to each.
+     */
+    function renderToAll(canvasIds, makeChart) {
+        const targets = canvasIds.map((id) => document.getElementById(id)).filter(Boolean);
+        if (targets.length === 0) return Promise.resolve();
+        return makeChart(targets);
+    }
+
+    /**
      * Cases by Status — doughnut chart.
      */
     async function renderCasesByStatusChart() {
-        const canvas = document.getElementById("chart-cases-status");
-        if (!canvas) return;
+        await renderToAll(["chart-cases-status", "chart-analytics-status"], async (targets) => {
+            try {
+                const [active, resolved, cancelled] = await Promise.all([
+                    Api.getCount("incidents", "statuscode eq 1"),
+                    Api.getCount("incidents", "statuscode eq 2"),
+                    Api.getCount("incidents", "statuscode eq 3"),
+                ]);
 
-        try {
-            const [active, resolved, cancelled] = await Promise.all([
-                Api.getCount("incidents", "statuscode eq 1"),
-                Api.getCount("incidents", "statuscode eq 2"),
-                Api.getCount("incidents", "statuscode eq 3"),
-            ]);
-
-            if (chartInstances["casesStatus"]) chartInstances["casesStatus"].destroy();
-
-            chartInstances["casesStatus"] = new Chart(canvas, {
-                type: "doughnut",
-                data: {
-                    labels: ["Active", "Resolved", "Cancelled"],
-                    datasets: [
-                        {
-                            data: [active, resolved, cancelled],
-                            backgroundColor: [
-                                COLORS.primary,
-                                COLORS.success,
-                                COLORS.grey,
-                            ],
-                            borderWidth: 0,
-                            hoverOffset: 4,
+                targets.forEach((canvas) => {
+                    if (chartInstances[canvas.id]) chartInstances[canvas.id].destroy();
+                    chartInstances[canvas.id] = new Chart(canvas, {
+                        type: "doughnut",
+                        data: {
+                            labels: ["Active", "Resolved", "Cancelled"],
+                            datasets: [{
+                                data: [active, resolved, cancelled],
+                                backgroundColor: [COLORS.primary, COLORS.success, COLORS.grey],
+                                borderWidth: 0,
+                                hoverOffset: 4,
+                            }],
                         },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: "65%",
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: "65%",
+                            plugins: {
+                                legend: {
+                                    position: "bottom",
+                                    labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 },
+                                },
+                            },
                         },
-                    },
-                },
-            });
-        } catch (err) {
-            showChartError(canvas, err.message);
-        }
+                    });
+                });
+            } catch (err) {
+                targets.forEach((c) => showChartError(c, err.message));
+            }
+        });
     }
 
     /**
      * Cases by Priority — horizontal bar chart.
      */
     async function renderCasesByPriorityChart() {
-        const canvas = document.getElementById("chart-cases-priority");
-        if (!canvas) return;
+        await renderToAll(["chart-cases-priority", "chart-analytics-priority"], async (targets) => {
+            try {
+                const [high, medium, low] = await Promise.all([
+                    Api.getCount("incidents", "prioritycode eq 1 and statuscode eq 1"),
+                    Api.getCount("incidents", "prioritycode eq 2 and statuscode eq 1"),
+                    Api.getCount("incidents", "prioritycode eq 3 and statuscode eq 1"),
+                ]);
 
-        try {
-            const [high, medium, low] = await Promise.all([
-                Api.getCount("incidents", "prioritycode eq 1 and statuscode eq 1"),
-                Api.getCount("incidents", "prioritycode eq 2 and statuscode eq 1"),
-                Api.getCount("incidents", "prioritycode eq 3 and statuscode eq 1"),
-            ]);
-
-            if (chartInstances["casesPriority"]) chartInstances["casesPriority"].destroy();
-
-            chartInstances["casesPriority"] = new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: ["High", "Medium", "Low"],
-                    datasets: [
-                        {
-                            label: "Active Cases",
-                            data: [high, medium, low],
-                            backgroundColor: [
-                                COLORS.danger,
-                                COLORS.warning,
-                                COLORS.success,
-                            ],
-                            borderRadius: 4,
-                            barThickness: 28,
+                targets.forEach((canvas) => {
+                    if (chartInstances[canvas.id]) chartInstances[canvas.id].destroy();
+                    chartInstances[canvas.id] = new Chart(canvas, {
+                        type: "bar",
+                        data: {
+                            labels: ["High", "Medium", "Low"],
+                            datasets: [{
+                                label: "Active Cases",
+                                data: [high, medium, low],
+                                backgroundColor: [COLORS.danger, COLORS.warning, COLORS.success],
+                                borderRadius: 4,
+                                barThickness: 28,
+                            }],
                         },
-                    ],
-                },
-                options: {
-                    indexAxis: "y",
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: "#edebe9" },
+                        options: {
+                            indexAxis: "y",
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#edebe9" } },
+                                y: { grid: { display: false } },
+                            },
                         },
-                        y: {
-                            grid: { display: false },
-                        },
-                    },
-                },
-            });
-        } catch (err) {
-            showChartError(canvas, err.message);
-        }
+                    });
+                });
+            } catch (err) {
+                targets.forEach((c) => showChartError(c, err.message));
+            }
+        });
     }
 
     /**
      * Case Trend — line chart showing cases created over past 7 days.
      */
     async function renderCaseTrendChart() {
-        const canvas = document.getElementById("chart-case-trend");
-        if (!canvas) return;
+        await renderToAll(["chart-case-trend", "chart-analytics-trend"], async (targets) => {
+            try {
+                const days = 7;
+                const labels = [];
+                const promises = [];
 
-        try {
-            const days = 7;
-            const labels = [];
-            const data = [];
+                for (let i = days - 1; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dayStr = date.toISOString().split("T")[0];
+                    const nextDate = new Date(date);
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    const nextStr = nextDate.toISOString().split("T")[0];
 
-            const promises = [];
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dayStr = date.toISOString().split("T")[0];
-                const nextDate = new Date(date);
-                nextDate.setDate(nextDate.getDate() + 1);
-                const nextStr = nextDate.toISOString().split("T")[0];
+                    labels.push(
+                        date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+                    );
+                    promises.push(
+                        Api.getCount("incidents", `createdon ge ${dayStr} and createdon lt ${nextStr}`)
+                    );
+                }
 
-                labels.push(
-                    date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-                );
-                promises.push(
-                    Api.getCount("incidents", `createdon ge ${dayStr} and createdon lt ${nextStr}`)
-                );
+                const data = await Promise.all(promises);
+
+                targets.forEach((canvas) => {
+                    if (chartInstances[canvas.id]) chartInstances[canvas.id].destroy();
+                    chartInstances[canvas.id] = new Chart(canvas, {
+                        type: "line",
+                        data: {
+                            labels: [...labels],
+                            datasets: [{
+                                label: "Cases Created",
+                                data: [...data],
+                                borderColor: COLORS.primary,
+                                backgroundColor: COLORS.primaryLight,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#edebe9" } },
+                                x: { grid: { display: false } },
+                            },
+                        },
+                    });
+                });
+            } catch (err) {
+                targets.forEach((c) => showChartError(c, err.message));
             }
-
-            const counts = await Promise.all(promises);
-            data.push(...counts);
-
-            if (chartInstances["caseTrend"]) chartInstances["caseTrend"].destroy();
-
-            chartInstances["caseTrend"] = new Chart(canvas, {
-                type: "line",
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: "Cases Created",
-                            data,
-                            borderColor: COLORS.primary,
-                            backgroundColor: COLORS.primaryLight,
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: "#edebe9" },
-                        },
-                        x: {
-                            grid: { display: false },
-                        },
-                    },
-                },
-            });
-        } catch (err) {
-            showChartError(canvas, err.message);
-        }
+        });
     }
 
     /**
