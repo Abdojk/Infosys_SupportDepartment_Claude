@@ -8,11 +8,11 @@ const Auth = (() => {
 
     // ---- Configuration (replace placeholders before deployment) ----
     const CONFIG = {
-        clientId: "YOUR_AZURE_APP_CLIENT_ID",
-        authority: "https://login.microsoftonline.com/YOUR_TENANT_ID",
+        clientId: "40fd227f-e117-4d6a-9a3a-9e187e65bd19",
+        authority: "https://login.microsoftonline.com/9d18d419-82b7-4a62-b888-e2747dad2d85",
         redirectUri: window.location.origin + "/index.html",
         postLogoutRedirectUri: window.location.origin + "/login.html",
-        d365BaseUrl: "https://YOUR_ORG.crm.dynamics.com",
+        d365BaseUrl: "https://infosysofficial.crm4.dynamics.com",
     };
 
     const SCOPES = [`${CONFIG.d365BaseUrl}/.default`];
