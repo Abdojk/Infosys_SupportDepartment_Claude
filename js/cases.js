@@ -84,7 +84,8 @@ const Cases = (() => {
             filters.push(`prioritycode eq ${currentFilter.priority}`);
         }
         if (currentFilter.search) {
-            filters.push(`contains(title,'${currentFilter.search}')`);
+            const sanitized = currentFilter.search.replace(/'/g, "''");
+            filters.push(`contains(title,'${sanitized}')`);
         }
 
         const parts = [

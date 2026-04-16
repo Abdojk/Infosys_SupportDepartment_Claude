@@ -208,6 +208,26 @@
     color: var(--color-text-light);
 }
 
+.badge--draft {
+    background: #edebe9;
+    color: var(--color-text-light);
+}
+
+.badge--submitted {
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.badge--approved {
+    background: #dff6dd;
+    color: var(--color-success);
+}
+
+.badge--rejected {
+    background: #fed9cc;
+    color: var(--color-danger);
+}
+
 /* --- Forms --- */
 .form-group {
     display: flex;
