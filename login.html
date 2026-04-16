@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — Infosys Support Dashboard</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <div class="login-page">
+        <!-- Left: Sign-in form -->
+        <div class="login-page__left">
+            <div class="login-card">
+                <div class="login-card__header">
+                    <div class="login-card__logo">IS</div>
+                    <h1 class="login-card__title">Welcome Back</h1>
+                    <p class="login-card__subtitle">Sign in to the Support Department Dashboard</p>
+                </div>
+
+                <div id="login-error" class="login-card__error" role="alert"></div>
+
+                <div class="login-card__form">
+                    <button id="btn-login" class="btn btn--primary btn--block btn--lg">
+                        Sign in with Microsoft
+                    </button>
+
+                    <p style="text-align:center;margin-top:var(--spacing-md);color:var(--color-text-light);font-size:var(--font-size-sm)">
+                        Uses your organisation's Azure Active Directory account
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Promo panel -->
+        <div class="login-page__right">
+            <div class="login-promo">
+                <h2 class="login-promo__title">Infosys Support Department</h2>
+                <p class="login-promo__text">
+                    Manage support cases, track time, and monitor department
+                    performance — all powered by Dynamics 365 Customer Engagement.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MSAL Browser SDK -->
+    <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+
+    <!-- App scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        (async () => {
+            const account = await Auth.init();
+
+            // If already authenticated, redirect to dashboard
+            if (account) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Bind sign-in button
+            document.getElementById("btn-login").addEventListener("click", () => {
+                try {
+                    Auth.login();
+                } catch (err) {
+                    const errorEl = document.getElementById("login-error");
+                    errorEl.textContent = "Sign-in failed. Please try again.";
+                    errorEl.classList.add("active");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
