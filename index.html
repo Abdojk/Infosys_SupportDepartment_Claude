@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Infosys Support Department</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <!-- Loading overlay (shown until auth resolves) -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <span class="text-light">Loading dashboard…</span>
+    </div>
+
+    <div id="app" class="app hidden">
+        <!-- ===== Sidebar ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__brand">
+                <div class="sidebar__logo">IS</div>
+                <span class="sidebar__brand-text">Support Dept</span>
+            </div>
+
+            <nav class="sidebar__nav">
+                <div class="sidebar__section-label">Main</div>
+                <a href="#" class="sidebar__link active" data-view="dashboard">
+                    <span class="sidebar__link-icon">&#9632;</span> Dashboard
+                </a>
+                <a href="#" class="sidebar__link" data-view="cases">
+                    <span class="sidebar__link-icon">&#128196;</span> Cases
+                    <span class="sidebar__link-badge" id="nav-cases-badge"></span>
+                </a>
+                <a href="#" class="sidebar__link" data-view="timesheets">
+                    <span class="sidebar__link-icon">&#128339;</span> Timesheets
+                </a>
+
+                <div class="sidebar__section-label">Reports</div>
+                <a href="#" class="sidebar__link" data-view="charts">
+                    <span class="sidebar__link-icon">&#128202;</span> Analytics
+                </a>
+            </nav>
+
+            <div class="sidebar__footer">
+                <div class="sidebar__user">
+                    <div class="sidebar__avatar" id="user-avatar"></div>
+                    <div class="sidebar__user-info">
+                        <div class="sidebar__user-name" id="user-name"></div>
+                        <div class="sidebar__user-role">Support Agent</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===== Main Content ===== -->
+        <div class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header__left">
+                    <button class="header__menu-btn" id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+                    <div class="header__breadcrumb">
+                        <span>Support</span>
+                        <span class="header__breadcrumb-sep">/</span>
+                        <span class="header__breadcrumb-current" id="breadcrumb-current">Dashboard</span>
+                    </div>
+                </div>
+                <div class="header__right">
+                    <button class="header__icon-btn" id="btn-refresh" title="Refresh data">&#8635;</button>
+                    <button class="header__icon-btn" id="btn-logout" title="Sign out">&#9211;</button>
+                </div>
+            </header>
+
+            <!-- Page content area -->
+            <div class="content">
+
+                <!-- ===== Dashboard View ===== -->
+                <section id="view-dashboard" class="view">
+                    <div class="page-title">
+                        <h1>Dashboard</h1>
+                    </div>
+
+                    <!-- Stat cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-card__label">Active Cases</span>
+                            <span class="stat-card__value" id="stat-active">—</span>
+                        </div>
+                        <div class="stat-card stat-card--success">
+                            <span class="stat-card__label">Resolved</span>
+                            <span class="stat-card__value" id="stat-resolved">—</span>
+                        </div>
+                        <div class="stat-card stat-card--danger">
+                            <span class="stat-card__label">Escalated</span>
+                            <span class="stat-card__value" id="stat-escalated">—</span>
+                        </div>
+                        <div class="stat-card stat-card--warning">
+                            <span class="stat-card__label">Hours This Week</span>
+                            <span class="stat-card__value" id="stat-hours">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Chart grid -->
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Cases by Status</span></div>
+                            <div class="card__body" style="height:260px">
+                                <canvas id="chart-cases-status"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Active Cases by Priority</span></div>
+                            <div class="card__body" style="height:260px">
+                                <canvas id="chart-cases-priority"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Cases Created (Last 7 Days)</span></div>
+                            <div class="card__body" style="height:260px">
+                                <canvas id="chart-case-trend"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Hours Logged This Week</span></div>
+                            <div class="card__body" style="height:260px">
+                                <canvas id="chart-timesheet"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== Cases View ===== -->
+                <section id="view-cases" class="view hidden">
+                    <div class="page-title">
+                        <h1>Support Cases</h1>
+                        <div class="page-title__actions">
+                            <button class="btn btn--primary" id="btn-new-case">+ New Case</button>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filters-bar">
+                        <div class="search-bar">
+                            <span class="search-bar__icon">&#128269;</span>
+                            <input id="case-search" class="form-control" placeholder="Search cases…">
+                        </div>
+                        <select id="filter-status" class="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="1">Active</option>
+                            <option value="2">Resolved</option>
+                            <option value="3">Cancelled</option>
+                        </select>
+                        <select id="filter-priority" class="form-control">
+                            <option value="">All Priorities</option>
+                            <option value="1">High</option>
+                            <option value="2">Medium</option>
+                            <option value="3">Low</option>
+                        </select>
+                        <span class="filters-bar__count" id="cases-count"></span>
+                    </div>
+
+                    <!-- Cases table -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket</th>
+                                        <th>Title</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cases-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;padding:2rem">
+                                            <div class="spinner"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== Timesheets View ===== -->
+                <section id="view-timesheets" class="view hidden">
+                    <div class="page-title">
+                        <h1>Timesheets</h1>
+                        <div class="page-title__actions">
+                            <button class="btn btn--primary" id="btn-add-time">+ Log Time</button>
+                        </div>
+                    </div>
+
+                    <!-- Week navigation -->
+                    <div class="flex items-center justify-between" style="margin-bottom:var(--spacing-md)">
+                        <button class="btn btn--secondary btn--sm" id="ts-prev-week">&larr; Previous</button>
+                        <span id="ts-week-label" style="font-weight:600"></span>
+                        <button class="btn btn--secondary btn--sm" id="ts-next-week">Next &rarr;</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__header">
+                            <span class="card__title">Time Entries</span>
+                            <span class="text-light" style="font-size:var(--font-size-sm)">
+                                Total: <strong id="ts-total-hours">—</strong>
+                            </span>
+                        </div>
+                        <div class="card__body" id="ts-entries">
+                            <div style="text-align:center;padding:2rem"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== Analytics View ===== -->
+                <section id="view-charts" class="view hidden">
+                    <div class="page-title">
+                        <h1>Analytics</h1>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Cases by Status</span></div>
+                            <div class="card__body" style="height:300px">
+                                <canvas id="chart-analytics-status"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Active Cases by Priority</span></div>
+                            <div class="card__body" style="height:300px">
+                                <canvas id="chart-analytics-priority"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid dashboard-grid--full" style="margin-top:var(--spacing-lg)">
+                        <div class="card">
+                            <div class="card__header"><span class="card__title">Cases Created (Last 7 Days)</span></div>
+                            <div class="card__body" style="height:300px">
+                                <canvas id="chart-analytics-trend"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Shared Modal ===== -->
+    <div id="modal-backdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal__header">
+                <h2 class="modal__title" id="modal-title"></h2>
+                <button class="modal__close" id="modal-close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal__body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ===== External Libraries ===== -->
+    <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- ===== App Scripts ===== -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/cases.js"></script>
+    <script src="js/timesheets.js"></script>
+    <script src="js/charts.js"></script>
+
+    <script>
+        (async () => {
+            // --- Authenticate ---
+            const account = await Auth.init();
+            if (!account) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // --- Populate user info ---
+            const user = Auth.getUser();
+            document.getElementById("user-name").textContent = user.name || user.email;
+            document.getElementById("user-avatar").textContent = user.initials;
+
+            // --- Hide loader, show app ---
+            document.getElementById("loading-overlay").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+
+            // --- Navigation ---
+            const views = document.querySelectorAll(".view");
+            const navLinks = document.querySelectorAll(".sidebar__link[data-view]");
+
+            function showView(viewName) {
+                views.forEach((v) => v.classList.add("hidden"));
+                const target = document.getElementById(`view-${viewName}`);
+                if (target) target.classList.remove("hidden");
+
+                navLinks.forEach((l) => l.classList.remove("active"));
+                const activeLink = document.querySelector(`.sidebar__link[data-view="${viewName}"]`);
+                if (activeLink) activeLink.classList.add("active");
+
+                document.getElementById("breadcrumb-current").textContent =
+                    viewName.charAt(0).toUpperCase() + viewName.slice(1);
+            }
+
+            navLinks.forEach((link) => {
+                link.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const view = link.dataset.view;
+                    showView(view);
+
+                    // Lazy-load view data
+                    if (view === "cases") Cases.init();
+                    if (view === "timesheets") Timesheets.init();
+                    if (view === "charts") Charts.init();
+                });
+            });
+
+            // --- Mobile sidebar toggle ---
+            document.getElementById("menu-toggle").addEventListener("click", () => {
+                document.getElementById("sidebar").classList.toggle("open");
+            });
+
+            // --- Modal close ---
+            document.getElementById("modal-close-btn").addEventListener("click", () => {
+                document.getElementById("modal-backdrop").classList.remove("active");
+            });
+
+            document.getElementById("modal-backdrop").addEventListener("click", (e) => {
+                if (e.target === e.currentTarget) {
+                    e.currentTarget.classList.remove("active");
+                }
+            });
+
+            // --- Refresh button ---
+            document.getElementById("btn-refresh").addEventListener("click", () => {
+                loadDashboard();
+                Utils.showToast("Refreshing data…", "info", 2000);
+            });
+
+            // --- Logout ---
+            document.getElementById("btn-logout").addEventListener("click", () => {
+                Auth.logout();
+            });
+
+            // --- Load dashboard data ---
+            async function loadDashboard() {
+                try {
+                    const [caseStats, weekStats] = await Promise.all([
+                        Cases.getStats(),
+                        Timesheets.getWeeklyStats(),
+                    ]);
+
+                    document.getElementById("stat-active").textContent = caseStats.active;
+                    document.getElementById("stat-resolved").textContent = caseStats.resolved;
+                    document.getElementById("stat-escalated").textContent = caseStats.escalated;
+                    document.getElementById("stat-hours").textContent = weekStats.totalFormatted;
+
+                    // Update nav badge
+                    const badge = document.getElementById("nav-cases-badge");
+                    if (badge) badge.textContent = caseStats.active > 0 ? caseStats.active : "";
+
+                    // Render dashboard charts
+                    Charts.init();
+                } catch (err) {
+                    Utils.showToast("Failed to load dashboard data", "error");
+                }
+            }
+
+            loadDashboard();
+        })();
+    </script>
+</body>
+</html>
